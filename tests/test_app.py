@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from backend.app import create_app
 
 
@@ -80,13 +82,30 @@ def test_impact_summary_rejects_invalid_recommendations_type() -> None:
 
 def test_ask_budget_response_contract() -> None:
     """Verify ask-budget returns expected response structure."""
-    app = create_app()
-    client = app.test_client()
+    mocked_result = {
+        "answer": "The budget prioritizes inclusive growth.",
+        "citations": ["budget.pdf (page 1)"],
+        "chunks": [
+            {
+                "chunk_id": 1,
+                "source": "budget.pdf",
+                "page": 1,
+                "text": "The budget prioritizes inclusive growth.",
+                "score": 0.9,
+            }
+        ],
+        "confidence": {"score": 0.9, "label": "high", "is_low_confidence": False},
+        "notice": "",
+    }
 
-    response = client.post(
-        "/api/ask-budget",
-        json={"question": "What is the budget?", "language": "en"},
-    )
+    with patch("backend.app.RAGService.answer", return_value=mocked_result):
+        app = create_app()
+        client = app.test_client()
+
+        response = client.post(
+            "/api/ask-budget",
+            json={"question": "What is the budget?", "language": "en"},
+        )
 
     assert response.status_code == 200
     body = response.get_json()

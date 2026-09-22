@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from unittest.mock import patch
 
 from evaluation.baseline_runner import run_baseline_evaluation
 
@@ -21,7 +22,24 @@ def test_baseline_dataset_loads() -> None:
 
 
 def test_baseline_evaluation_generates_report() -> None:
-    report = run_baseline_evaluation(Path("data/evaluation/baseline_questions.json"))
+    mocked_result = {
+        "answer": "The budget prioritizes inclusive growth.",
+        "citations": ["budget.pdf (page 1)"],
+        "chunks": [
+            {
+                "chunk_id": 1,
+                "source": "budget.pdf",
+                "page": 1,
+                "text": "The budget prioritizes inclusive growth.",
+                "score": 0.9,
+            }
+        ],
+        "confidence": {"score": 0.9, "label": "high", "is_low_confidence": False},
+        "notice": "",
+    }
+
+    with patch("backend.app.RAGService.answer", return_value=mocked_result):
+        report = run_baseline_evaluation(Path("data/evaluation/baseline_questions.json"))
 
     assert report["dataset_size"] >= 30
     assert "actual_metrics" in report

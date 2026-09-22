@@ -37,10 +37,13 @@ class RAGService:
         self.index_path = settings.index_dir / "faiss.index"
         self.vectors_path = settings.index_dir / "vectors.npy"
         self.metadata_path = settings.index_dir / "chunks_meta.json"
+        self.documents_path = settings.index_dir / "documents_meta.json"
         self.config_path = settings.index_dir / "retrieval_config.json"
         self.index = None
         self.vectors = None
         self.metadata: List[Dict[str, Any]] = []
+        self.documents: List[Dict[str, Any]] = []
+        self.provenance_ready = False
         self.embedder = None
         self.embedding_backend = settings.embedding_backend
         self.hash_embedding_dim = settings.hash_embedding_dim
@@ -55,6 +58,8 @@ class RAGService:
     def refresh_index(self) -> None:
         self.ready = False
         self.metadata = []
+        self.documents = []
+        self.provenance_ready = False
         self.index = None
         self.vectors = None
 
@@ -78,6 +83,28 @@ class RAGService:
                     self.hash_embedding_dim = int(
                         config_data.get("hash_embedding_dim", self.hash_embedding_dim)
                     )
+                    schema_version = int(config_data.get("schema_version", 1))
+                if schema_version == 2:
+                    if not self.documents_path.exists():
+                        raise ValueError("Provenance index is missing documents_meta.json")
+                    with self.documents_path.open("r", encoding="utf-8") as documents_file:
+                        self.documents = json.load(documents_file)
+                    document_ids = {
+                        str(document.get("document_id")) for document in self.documents
+                    }
+                    required = {
+                        "chunk_id", "document_id", "source", "page", "section",
+                        "text", "chunk_position", "content_hash",
+                    }
+                    if not all(required.issubset(chunk) for chunk in self.metadata):
+                        raise ValueError("Provenance index has incomplete chunk metadata")
+                    if not all(
+                        chunk.get("document_id") in document_ids for chunk in self.metadata
+                    ):
+                        raise ValueError("Chunk references unknown document_id")
+                    self.provenance_ready = True
+                else:
+                    LOGGER.warning("Loading legacy index metadata; rebuild index for provenance support.")
 
             if faiss is not None and self.index_path.exists():
                 self.index = faiss.read_index(str(self.index_path))
@@ -168,10 +195,16 @@ class RAGService:
                 score = 1.0 / (1.0 + max(float(distance), 0.0))
                 retrieved.append(
                     {
-                        "chunk_id": int(chunk.get("chunk_id", idx)),
+                        "chunk_id": chunk.get("chunk_id", idx),
+                        "document_id": chunk.get("document_id"),
                         "source": str(chunk.get("source", "unknown")),
                         "page": int(chunk.get("page", 0)),
+                        "section": chunk.get("section"),
                         "text": str(chunk.get("text", "")),
+                        "chunk_position": chunk.get("chunk_position"),
+                        "char_start": chunk.get("char_start"),
+                        "char_end": chunk.get("char_end"),
+                        "content_hash": chunk.get("content_hash"),
                         "score": round(score, 4),
                     }
                 )
@@ -186,10 +219,16 @@ class RAGService:
                 score = float((similarities[idx] + 1.0) / 2.0)
                 retrieved.append(
                     {
-                        "chunk_id": int(chunk.get("chunk_id", idx)),
+                        "chunk_id": chunk.get("chunk_id", idx),
+                        "document_id": chunk.get("document_id"),
                         "source": str(chunk.get("source", "unknown")),
                         "page": int(chunk.get("page", 0)),
+                        "section": chunk.get("section"),
                         "text": str(chunk.get("text", "")),
+                        "chunk_position": chunk.get("chunk_position"),
+                        "char_start": chunk.get("char_start"),
+                        "char_end": chunk.get("char_end"),
+                        "content_hash": chunk.get("content_hash"),
                         "score": round(max(0.0, min(score, 1.0)), 4),
                     }
                 )
@@ -317,6 +356,19 @@ class RAGService:
 
         return "\n".join(lines)
 
+    @staticmethod
+    def _citation_data(chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        return [
+            {
+                "document_id": chunk.get("document_id"),
+                "chunk_id": chunk.get("chunk_id"),
+                "source": chunk.get("source"),
+                "page": chunk.get("page"),
+                "section": chunk.get("section"),
+            }
+            for chunk in chunks
+        ]
+
     def answer(self, question: str, language: str = "en") -> Dict[str, Any]:
         cleaned_question = question.strip()
         if not cleaned_question:
@@ -351,6 +403,7 @@ class RAGService:
         notice = self._low_confidence_notice() if confidence["is_low_confidence"] else ""
 
         citations = []
+        citation_data = self._citation_data(retrieved[: self.settings.max_context_chunks])
         seen = set()
         for chunk in retrieved[: self.settings.max_context_chunks]:
             citation = f"{chunk['source']} (page {chunk['page']})"
@@ -368,6 +421,7 @@ class RAGService:
         return {
             "answer": answer_text,
             "citations": citations,
+            "citation_data": citation_data,
             "chunks": retrieved[: self.settings.max_context_chunks],
             "confidence": confidence,
             "notice": notice,

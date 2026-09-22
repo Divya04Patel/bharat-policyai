@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import importlib
 import json
 import re
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List, Tuple
 
 try:
     import faiss  # type: ignore
@@ -125,6 +126,19 @@ def clean_text(text: str) -> str:
     return text.strip()
 
 
+def document_id_for_content(content: bytes) -> str:
+    return f"doc-{hashlib.sha256(content).hexdigest()}"
+
+
+def content_hash_for_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def chunk_id_for_content(document_id: str, position: int, text: str) -> str:
+    material = f"{document_id}|{position}|{text}".encode("utf-8")
+    return f"chunk-{hashlib.sha256(material).hexdigest()}"
+
+
 def chunk_text(text: str, chunk_size: int = 700, overlap: int = 120) -> List[str]:
     if chunk_size <= overlap:
         raise ValueError("chunk_size must be larger than overlap")
@@ -144,27 +158,84 @@ def chunk_text(text: str, chunk_size: int = 700, overlap: int = 120) -> List[str
     return chunks
 
 
-def extract_pdf_chunks(
+def _chunk_text_with_boundaries(
+    text: str, chunk_size: int = 700, overlap: int = 120
+) -> List[Tuple[str, int, int]]:
+    if chunk_size <= overlap:
+        raise ValueError("chunk_size must be larger than overlap")
+
+    chunks: List[Tuple[str, int, int]] = []
+    step = chunk_size - overlap
+    for start in range(0, len(text), step):
+        piece = text[start : start + chunk_size].strip()
+        if len(piece) < 120:
+            continue
+        leading = len(text[start : start + chunk_size]) - len(
+            text[start : start + chunk_size].lstrip()
+        )
+        chunk_start = start + leading
+        chunks.append((piece, chunk_start, chunk_start + len(piece)))
+        if start + chunk_size >= len(text):
+            break
+    return chunks
+
+
+def extract_pdf_document(
     pdf_path: Path, chunk_size: int = 700, overlap: int = 120
-) -> List[Dict[str, str | int]]:
+) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     if fitz is None:
         raise RuntimeError("PyMuPDF is not installed. Install dependencies first.")
 
-    extracted: List[Dict[str, str | int]] = []
-    with fitz.open(pdf_path) as doc:
+    raw_content = pdf_path.read_bytes()
+    document_id = document_id_for_content(raw_content)
+    chunks: List[Dict[str, Any]] = []
+    with fitz.open(stream=raw_content, filetype="pdf") as doc:
+        metadata = doc.metadata or {}
+        title = str(metadata.get("title") or "").strip() or None
+        document = {
+            "document_id": document_id,
+            "original_filename": pdf_path.name,
+            "source_url": None,
+            "document_title": title,
+            "publication_date": None,
+            "effective_date": None,
+            "ingestion_timestamp": datetime.now(timezone.utc).isoformat(),
+            "content_hash": hashlib.sha256(raw_content).hexdigest(),
+            "page_count": len(doc),
+            "document_type": "application/pdf",
+        }
+        position = 0
         for page_number, page in enumerate(doc, start=1):
             page_text = clean_text(page.get_text("text"))
             if not page_text:
                 continue
-            for chunk in chunk_text(page_text, chunk_size=chunk_size, overlap=overlap):
-                extracted.append(
+            for text, char_start, char_end in _chunk_text_with_boundaries(
+                page_text, chunk_size=chunk_size, overlap=overlap
+            ):
+                chunks.append(
                     {
+                        "chunk_id": chunk_id_for_content(document_id, position, text),
+                        "document_id": document_id,
                         "source": pdf_path.name,
                         "page": page_number,
-                        "text": chunk,
+                        "section": None,
+                        "text": text,
+                        "chunk_position": position,
+                        "char_start": char_start,
+                        "char_end": char_end,
+                        "content_hash": content_hash_for_text(text),
                     }
                 )
+                position += 1
+    return document, chunks
 
+
+def extract_pdf_chunks(
+    pdf_path: Path, chunk_size: int = 700, overlap: int = 120
+) -> List[Dict[str, str | int]]:
+    _, extracted = extract_pdf_document(
+        pdf_path, chunk_size=chunk_size, overlap=overlap
+    )
     return extracted
 
 
@@ -182,15 +253,14 @@ def build_index(
     if not pdf_files:
         raise FileNotFoundError(f"No PDF files found in {input_dir}")
 
-    all_chunks: List[Dict[str, str | int]] = []
+    all_chunks: List[Dict[str, Any]] = []
+    documents: List[Dict[str, Any]] = []
     for pdf_path in pdf_files:
-        all_chunks.extend(
-            extract_pdf_chunks(
-                pdf_path,
-                chunk_size=chunk_size,
-                overlap=chunk_overlap,
-            )
+        document, chunks = extract_pdf_document(
+            pdf_path, chunk_size=chunk_size, overlap=chunk_overlap
         )
+        documents.append(document)
+        all_chunks.extend(chunks)
 
     if not all_chunks:
         raise RuntimeError("No extractable text found in input PDFs.")
@@ -204,6 +274,7 @@ def build_index(
     index_path = index_dir / "faiss.index"
     vectors_path = index_dir / "vectors.npy"
     metadata_path = index_dir / "chunks_meta.json"
+    documents_path = index_dir / "documents_meta.json"
     config_path = index_dir / "retrieval_config.json"
     cache_path = index_dir / "embedding_cache.npz"
 
@@ -233,23 +304,16 @@ def build_index(
         if index_path.exists():
             index_path.unlink()
 
-    metadata = []
-    for idx, chunk in enumerate(all_chunks):
-        metadata.append(
-            {
-                "chunk_id": idx,
-                "source": chunk["source"],
-                "page": chunk["page"],
-                "text": chunk["text"],
-            }
-        )
-
     with metadata_path.open("w", encoding="utf-8") as output_file:
-        json.dump(metadata, output_file, ensure_ascii=True, indent=2)
+        json.dump(all_chunks, output_file, ensure_ascii=True, indent=2)
+
+    with documents_path.open("w", encoding="utf-8") as documents_file:
+        json.dump(documents, documents_file, ensure_ascii=True, indent=2)
 
     with config_path.open("w", encoding="utf-8") as config_file:
         json.dump(
             {
+                "schema_version": 2,
                 "embedding_backend": backend_name,
                 "embedding_model": embedding_model,
                 "hash_embedding_dim": hash_embedding_dim,
@@ -258,6 +322,8 @@ def build_index(
                 "embedding_cache_file": cache_path.name,
                 "embedding_cache_size": len(cache),
                 "embedding_cache_hits": int(vector_count - (len(cache) - cache_before)),
+                "documents_metadata_file": documents_path.name,
+                "chunks_metadata_file": metadata_path.name,
             },
             config_file,
             ensure_ascii=True,
