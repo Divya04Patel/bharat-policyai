@@ -1,0 +1,402 @@
+[
+  {
+    "id": "Q01",
+    "category": "eligibility",
+    "question": "Who is eligible for PM-KISAN?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository, not the current PDF corpus alone."
+  },
+  {
+    "id": "Q02",
+    "category": "eligibility",
+    "question": "Who qualifies for the Kisan Credit Card scheme?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository, not the current PDF corpus alone."
+  },
+  {
+    "id": "Q03",
+    "category": "benefits",
+    "question": "What is the main purpose of the PM-KISAN scheme?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q04",
+    "category": "benefits",
+    "question": "What support does the crop insurance scheme provide?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q05",
+    "category": "documents",
+    "question": "Which documents are usually required to apply for PM-KISAN?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q06",
+    "category": "application",
+    "question": "How do I apply for a student scholarship?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q07",
+    "category": "numeric",
+    "question": "What is the income cap for PM-KISAN?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q08",
+    "category": "numeric",
+    "question": "What is the age range for the Senior Citizens Savings Scheme?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q09",
+    "category": "eligibility",
+    "question": "Is a student in Delhi eligible for a farmer scheme?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": false,
+    "notes": "This is intentionally an invalid or mismatched policy question. The answer should not be forced from weak evidence."
+  },
+  {
+    "id": "Q10",
+    "category": "unanswerable",
+    "question": "What was the exact annual subsidy amount in the 2022 budget for every scheme?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": false,
+    "notes": "This exceeds the current corpus and repository structure."
+  },
+  {
+    "id": "Q11",
+    "category": "documents",
+    "question": "What government documents are used by the current policy retrieval system?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This is a system-knowledge question grounded in the repository artifacts."
+  },
+  {
+    "id": "Q12",
+    "category": "benefits",
+    "question": "What is the general benefit of Ayushman Bharat PM-JAY?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q13",
+    "category": "eligibility",
+    "question": "Which schemes are relevant for a farmer in Odisha?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q14",
+    "category": "eligibility",
+    "question": "Which schemes are relevant for a student in Uttar Pradesh?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q15",
+    "category": "application",
+    "question": "What documents are typically needed to apply for a government loan scheme?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q16",
+    "category": "numeric",
+    "question": "What is the income cap for Ayushman Bharat PM-JAY?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q17",
+    "category": "eligibility",
+    "question": "Are there schemes for senior citizens?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q18",
+    "category": "benefits",
+    "question": "What is the value proposition of the Skill India Mission?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q19",
+    "category": "documents",
+    "question": "Which source documents are relevant to the current policy retrieval index?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This is a repository-grounded system question."
+  },
+  {
+    "id": "Q20",
+    "category": "unanswerable",
+    "question": "Give me the exact eligibility rule for all central government schemes in 2023 in one sentence.",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": false,
+    "notes": "The current corpus and metadata do not support a single exact all-scheme answer."
+  },
+  {
+    "id": "Q21",
+    "category": "eligibility",
+    "question": "Which schemes are available to self-employed people?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q22",
+    "category": "application",
+    "question": "What application documents are required for Startup India support?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q23",
+    "category": "benefits",
+    "question": "What is the benefit summary of PMEGP?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q24",
+    "category": "numeric",
+    "question": "What is the maximum age for the Atal Pension Yojana?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q25",
+    "category": "eligibility",
+    "question": "Who can apply for the National Social Assistance Programme?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q26",
+    "category": "unanswerable",
+    "question": "What is the exact page number for the 2024 budget update on PM-KISAN in the raw PDFs?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": false,
+    "notes": "Page-level expectations should only be added when the corpus is directly inspected and verified."
+  },
+  {
+    "id": "Q27",
+    "category": "documents",
+    "question": "What budget PDF files are currently in the raw data directory?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This appears in the repository file structure and should be verifiable."
+  },
+  {
+    "id": "Q28",
+    "category": "application",
+    "question": "What documents are required for Kisan Credit Card?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q29",
+    "category": "benefits",
+    "question": "What is the purpose of the National Scholarship Portal Schemes?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q30",
+    "category": "numeric",
+    "question": "What is the income cap for the National Scholarship Portal Schemes?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q31",
+    "category": "eligibility",
+    "question": "Which schemes are aimed at entrepreneurs or MSME owners?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q32",
+    "category": "application",
+    "question": "What is the application process for state-specific scheme support in Odisha or Madhya Pradesh?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q33",
+    "category": "unanswerable",
+    "question": "Tell me the exact rule that applies to every single scheme in every state without exception.",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": false,
+    "notes": "This is intentionally broader than the available metadata and corpus."
+  },
+  {
+    "id": "Q34",
+    "category": "benefits",
+    "question": "What is the purpose of the digital internship scheme?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q35",
+    "category": "eligibility",
+    "question": "Who is eligible for the Senior Citizens Savings Scheme?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q36",
+    "category": "benefits",
+    "question": "What is the general value of life or accident insurance schemes?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q37",
+    "category": "application",
+    "question": "What application materials are usually required for a pension scheme?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q38",
+    "category": "numeric",
+    "question": "What is the income cap for PMEGP?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q39",
+    "category": "eligibility",
+    "question": "Which schemes are designed for workers, professionals, or apprentices?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  },
+  {
+    "id": "Q40",
+    "category": "documents",
+    "question": "Which documents are usually required to complete a bank-linked insurance application?",
+    "expected_answer": null,
+    "expected_source": null,
+    "expected_page": null,
+    "answerable": true,
+    "notes": "This question is grounded in the scheme metadata in the repository."
+  }
+]

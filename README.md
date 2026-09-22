@@ -12,31 +12,54 @@ py -3.11 -m venv .venv
 pip install -r requirements.txt
 ```
 
-3. Copy `.env.example` to `.env` and set `OLLAMA_MODEL` (`mistral` or `llama3` recommended).
-4. Ensure Ollama is running locally and the model is pulled:
+2. Copy `.env.example` to `.env` and set `OLLAMA_MODEL` (`mistral` or `llama3` recommended).
+3. Ensure Ollama is running locally and the model is pulled:
 
 ```bash
 ollama serve
 ollama pull mistral
 ```
-5. Add budget PDFs to `data/raw/`.
-6. Build vector index (local hash embeddings by default):
+4. Add budget PDFs to `data/raw/`.
+5. Build the local index:
 
 ```bash
 python -m backend.index_builder --input-dir data/raw --index-dir data/index
 ```
-
-7. Run backend:
+6. Run backend:
 
 ```bash
 python -m backend.app
 ```
-
-8. Run frontend:
+7. Run frontend:
 
 ```bash
 streamlit run frontend/streamlit_app.py
 ```
+
+## Current baseline capabilities
+
+- Local PDF text extraction and chunking for government policy documents.
+- Local dense-style retrieval using the current embedding implementation.
+- FAISS index support when available, with NumPy fallback when unavailable.
+- Local Ollama generation for answer synthesis.
+- Fallback extractive responses if Ollama is unavailable.
+- Scheme recommendation and comparison using the current CSV metadata.
+- Source-backed citations and confidence labels from the current retrieval pipeline.
+
+## Baseline evaluation
+
+The repository includes a small starter dataset at `data/evaluation/baseline_questions.json` for measuring the current system before any retrieval architecture changes.
+
+This Phase 1 evaluation intentionally measures only what the current implementation can support:
+
+- successful response or fallback response
+- citation/source presence
+- answerability behavior
+- no-document behavior
+- empty-retrieval behavior
+- latency measurements when available
+
+It does not claim Recall@K, Precision@K, or faithfulness metrics for a system that does not yet expose those calculations directly.
 
 ## Notes
 

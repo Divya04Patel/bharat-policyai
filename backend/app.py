@@ -142,6 +142,30 @@ def create_app() -> Flask:
                 "rag_ready": rag_service.ready,
                 "indexed_chunks": rag_service.indexed_chunks,
                 "schemes_loaded": recommender.scheme_count,
+                "embedding_backend": rag_service.embedding_backend,
+                "embedding_model": settings.embedding_model,
+                "index_path": str(settings.index_dir),
+                "baseline_eval_file": str(settings.baseline_eval_file),
+            }
+        )
+
+    @app.get("/diagnostics")
+    def diagnostics() -> Any:
+        metadata_count = len(rag_service.metadata)
+        return _success_response(
+            {
+                "status": "ok",
+                "rag_ready": rag_service.ready,
+                "indexed_chunks": metadata_count,
+                "metadata_file_exists": rag_service.metadata_path.exists(),
+                "faiss_index_exists": rag_service.index_path.exists(),
+                "numpy_vectors_exists": rag_service.vectors_path.exists(),
+                "embedding_backend": rag_service.embedding_backend,
+                "hash_embedding_dim": rag_service.hash_embedding_dim,
+                "retrieval_k": settings.retrieval_k,
+                "retrieval_min_score": settings.retrieval_min_score,
+                "scheme_count": recommender.scheme_count,
+                "baseline_eval_exists": settings.baseline_eval_file.exists(),
             }
         )
 

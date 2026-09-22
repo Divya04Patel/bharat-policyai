@@ -29,6 +29,8 @@ class Settings:
     retrieval_min_score: float
     confidence_high_threshold: float
     confidence_medium_threshold: float
+    evaluation_dir: Path
+    baseline_eval_file: Path
 
 
 def _resolve_path(path_value: str) -> Path:
@@ -41,6 +43,10 @@ def _resolve_path(path_value: str) -> Path:
 def get_settings() -> Settings:
     data_dir = _resolve_path(os.getenv("DATA_DIR", "data"))
     index_dir = _resolve_path(os.getenv("INDEX_DIR", str(data_dir / "index")))
+    evaluation_dir = _resolve_path(os.getenv("EVALUATION_DIR", str(data_dir / "evaluation")))
+    baseline_eval_file = _resolve_path(
+        os.getenv("BASELINE_EVAL_FILE", str(evaluation_dir / "baseline_questions.json"))
+    )
 
     return Settings(
         backend_host=os.getenv("BACKEND_HOST", "127.0.0.1"),
@@ -54,7 +60,7 @@ def get_settings() -> Settings:
         hash_embedding_dim=int(os.getenv("HASH_EMBEDDING_DIM", "384")),
         ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/"),
         ollama_model=os.getenv("OLLAMA_MODEL", "mistral"),
-        ollama_timeout_sec=int(os.getenv("OLLAMA_TIMEOUT_SEC", "25")),
+        ollama_timeout_sec=int(os.getenv("OLLAMA_TIMEOUT_SEC", "60")),
         ollama_keep_alive=os.getenv("OLLAMA_KEEP_ALIVE", "15m"),
         llm_max_tokens=int(os.getenv("LLM_MAX_TOKENS", "320")),
         max_context_chunks=int(os.getenv("MAX_CONTEXT_CHUNKS", "4")),
@@ -62,4 +68,6 @@ def get_settings() -> Settings:
         retrieval_min_score=float(os.getenv("RETRIEVAL_MIN_SCORE", "0.32")),
         confidence_high_threshold=float(os.getenv("CONFIDENCE_HIGH_THRESHOLD", "0.78")),
         confidence_medium_threshold=float(os.getenv("CONFIDENCE_MEDIUM_THRESHOLD", "0.55")),
+        evaluation_dir=evaluation_dir,
+        baseline_eval_file=baseline_eval_file,
     )

@@ -255,7 +255,11 @@ class RAGService:
             )
             return answer or None
         except Exception as exc:  # pragma: no cover
-            LOGGER.warning("Ollama generation failed, fallback mode enabled: %s", exc)
+            LOGGER.warning(
+                "Ollama generation failed, fallback mode enabled (%s): %s",
+                type(exc).__name__,
+                exc,
+            )
             return None
 
     def _confidence_from_chunks(self, chunks: List[Dict[str, Any]]) -> Dict[str, Any]:
