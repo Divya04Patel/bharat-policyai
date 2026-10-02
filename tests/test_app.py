@@ -138,13 +138,22 @@ def test_recommend_schemes_empty_profile() -> None:
 
 def test_impact_summary_auto_computes_recommendations() -> None:
     """Verify impact-summary generates recommendations if not provided."""
-    app = create_app()
-    client = app.test_client()
+    mocked_result = {
+        "answer": "The budget prioritizes inclusive growth.",
+        "citations": ["budget.pdf (page 1)"],
+        "chunks": [],
+        "confidence": {"score": 0.9, "label": "high", "is_low_confidence": False},
+        "notice": "",
+    }
 
-    response = client.post(
-        "/api/impact-summary",
-        json={"profile": {"occupation": "student", "age": 22, "state": "delhi"}},
-    )
+    with patch("backend.app.RAGService.answer", return_value=mocked_result):
+        app = create_app()
+        client = app.test_client()
+
+        response = client.post(
+            "/api/impact-summary",
+            json={"profile": {"occupation": "student", "age": 22, "state": "delhi"}},
+        )
 
     assert response.status_code == 200
     body = response.get_json()
