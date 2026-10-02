@@ -7,7 +7,7 @@ import importlib
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import faiss  # type: ignore
@@ -158,26 +158,110 @@ def chunk_text(text: str, chunk_size: int = 700, overlap: int = 120) -> List[str
     return chunks
 
 
-def _chunk_text_with_boundaries(
-    text: str, chunk_size: int = 700, overlap: int = 120
-) -> List[Tuple[str, int, int]]:
-    if chunk_size <= overlap:
-        raise ValueError("chunk_size must be larger than overlap")
+def _split_long_paragraph(text: str, chunk_size: int) -> List[Tuple[str, int, int]]:
+    if len(text) <= chunk_size:
+        return [(text, 0, len(text))]
 
-    chunks: List[Tuple[str, int, int]] = []
-    step = chunk_size - overlap
-    for start in range(0, len(text), step):
-        piece = text[start : start + chunk_size].strip()
-        if len(piece) < 120:
+    sentences = list(re.finditer(r".*?(?:[.!?](?:\s+|$)|$)", text))
+    pieces: List[Tuple[str, int, int]] = []
+    current_start = 0
+    current_end = 0
+    for match in sentences:
+        sentence_start = match.start()
+        sentence_end = match.end()
+        if sentence_end - sentence_start > chunk_size:
+            if current_end > current_start:
+                pieces.append((text[current_start:current_end].strip(), current_start, current_end))
+            current_start = sentence_start
+            current_end = sentence_start
+            for word_match in re.finditer(r"\S+(?:\s+|$)", text[sentence_start:sentence_end]):
+                word_start = sentence_start + word_match.start()
+                word_end = sentence_start + word_match.end()
+                if current_end > current_start and word_end - current_start > chunk_size:
+                    pieces.append((text[current_start:current_end].strip(), current_start, current_end))
+                    current_start = word_start
+                current_end = word_end
             continue
-        leading = len(text[start : start + chunk_size]) - len(
-            text[start : start + chunk_size].lstrip()
-        )
-        chunk_start = start + leading
-        chunks.append((piece, chunk_start, chunk_start + len(piece)))
-        if start + chunk_size >= len(text):
-            break
-    return chunks
+        if not current_end:
+            current_start = sentence_start
+        if sentence_end - current_start <= chunk_size:
+            current_end = sentence_end
+            continue
+        pieces.append((text[current_start:current_end].strip(), current_start, current_end))
+        current_start = sentence_start
+        current_end = sentence_end
+
+    if current_end > current_start:
+        pieces.append((text[current_start:current_end].strip(), current_start, current_end))
+    return [(piece, start, end) for piece, start, end in pieces if piece]
+
+
+def chunk_page_units(
+    units: List[Tuple[str, Optional[str]]], chunk_size: int = 700
+) -> List[Tuple[str, int, int, Optional[str]]]:
+    """Pack extracted paragraph/block units without crossing page boundaries."""
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive")
+
+    normalized_units = [(text.strip(), section) for text, section in units if text.strip()]
+    page_text = "\n\n".join(text for text, _ in normalized_units)
+    offsets: List[Tuple[int, int, str, Optional[str]]] = []
+    cursor = 0
+    for text, section in normalized_units:
+        start = cursor
+        end = start + len(text)
+        offsets.append((start, end, text, section))
+        cursor = end + 2
+
+    chunks: List[Tuple[str, int, int, Optional[str]]] = []
+    current_text: List[str] = []
+    current_start = 0
+    current_end = 0
+    current_section: Optional[str] = None
+    for start, end, text, section in offsets:
+        for piece, local_start, local_end in _split_long_paragraph(text, chunk_size):
+            piece_start = start + local_start
+            piece_end = start + local_end
+            candidate_length = piece_end - current_start if current_text else len(piece)
+            if current_text and candidate_length > chunk_size:
+                chunks.append(("\n\n".join(current_text), current_start, current_end, current_section))
+                current_text = []
+                current_section = None
+            if not current_text:
+                current_start = piece_start
+            current_text.append(piece)
+            current_end = piece_end
+            if section is not None:
+                current_section = section
+
+    if current_text:
+        chunks.append(("\n\n".join(current_text), current_start, current_end, current_section))
+    return [(text, start, end, section) for text, start, end, section in chunks if text]
+
+
+def _strong_heading(text: str) -> Optional[str]:
+    heading = text.strip()
+    if re.fullmatch(r"Priority\s+\d+\s*:\s*.+", heading, flags=re.IGNORECASE):
+        return heading
+    return None
+
+
+def _page_units(page: Any) -> List[Tuple[str, Optional[str]]]:
+    blocks = page.get_text("blocks", sort=True)
+    units: List[Tuple[str, Optional[str]]] = []
+    active_section: Optional[str] = None
+    for block in blocks:
+        block_text = clean_text(str(block[4]))
+        if not block_text:
+            continue
+        heading = _strong_heading(block_text)
+        if heading:
+            active_section = heading
+        units.append((block_text, active_section))
+    if units:
+        return units
+    fallback = clean_text(page.get_text("text"))
+    return [(fallback, None)] if fallback else []
 
 
 def extract_pdf_document(
@@ -206,11 +290,8 @@ def extract_pdf_document(
         }
         position = 0
         for page_number, page in enumerate(doc, start=1):
-            page_text = clean_text(page.get_text("text"))
-            if not page_text:
-                continue
-            for text, char_start, char_end in _chunk_text_with_boundaries(
-                page_text, chunk_size=chunk_size, overlap=overlap
+            for text, char_start, char_end, section in chunk_page_units(
+                _page_units(page), chunk_size=chunk_size
             ):
                 chunks.append(
                     {
@@ -218,7 +299,7 @@ def extract_pdf_document(
                         "document_id": document_id,
                         "source": pdf_path.name,
                         "page": page_number,
-                        "section": None,
+                        "section": section,
                         "text": text,
                         "chunk_position": position,
                         "char_start": char_start,
